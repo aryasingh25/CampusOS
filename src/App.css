@@ -436,3 +436,98 @@ padding: 15px;
 display: none;
 }
 }
+
+
+/* CampusOS: improve text readability */
+
+:root {
+  color-scheme: light;
+}
+
+body,
+.app {
+  color: #24213a;
+}
+
+.muted,
+.eyebrow,
+.side-label,
+.sidebar-bottom p,
+.stat-card p,
+.stat-card span,
+.task-info p,
+.schedule-item p,
+.time,
+.welcome-card p {
+  color: #514b65;
+}
+
+/* Main headings */
+h1,
+h2,
+h3,
+strong {
+  color: #24213a;
+}
+
+/* Sidebar text */
+.nav-item {
+  color: #45405b;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: #4333a8;
+}
+
+/* Cards and task details */
+.panel,
+.stat-card {
+  color: #24213a;
+}
+
+.count-badge {
+  color: #4333a8;
+  background: #eeeaff;
+}
+
+/* Task statuses */
+.status.pending {
+  color: #8a5100;
+  background: #fff0d6;
+}
+
+.status.progress {
+  color: #174ea6;
+  background: #e5efff;
+}
+
+.status.completed {
+  color: #166534;
+  background: #dcfce7;
+}
+
+/* Form readability */
+.task-form label {
+  color: #37304e;
+}
+
+.task-form input {
+  color: #24213a;
+  background: #ffffff;
+}
+
+.task-form input::placeholder {
+  color: #6b6579;
+  opacity: 1;
+}
+
+/* Footer and secondary text */
+footer,
+footer span {
+  color: #514b65;
+}
+
+.empty-state {
+  color: #514b65;
+}
