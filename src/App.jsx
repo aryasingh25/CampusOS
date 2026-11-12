@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import './App.css';
+import "./App.css";
 
 const defaultTasks = [
   {
@@ -9,6 +9,7 @@ const defaultTasks = [
     task: 'Complete Unit 2 notes',
     date: 'Today',
     status: 'Pending',
+    priority: 'High',
   },
   {
     id: 2,
@@ -16,6 +17,7 @@ const defaultTasks = [
     task: 'Prepare for quiz',
     date: 'Tomorrow',
     status: 'In Progress',
+    priority: 'Medium',
   },
   {
     id: 3,
@@ -23,6 +25,7 @@ const defaultTasks = [
     task: 'Learn React basics',
     date: 'Today',
     status: 'Pending',
+    priority: 'Low',
   },
 ];
 
@@ -37,34 +40,70 @@ function App() {
   });
 
   const [showForm, setShowForm] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null);
   const [taskName, setTaskName] = useState('');
   const [subject, setSubject] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [priority, setPriority] = useState('Medium');
+  const [activeFilter, setActiveFilter] = useState('All');
 
   useEffect(() => {
     localStorage.setItem('campusos-tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  function addTask(event) {
-    event.preventDefault();
-
-    if (!taskName.trim() || !subject.trim()) {
-      return;
-    }
-
-    const newTask = {
-      id: Date.now(),
-      task: taskName.trim(),
-      subject: subject.trim(),
-      date: dueDate || 'No due date',
-      status: 'Pending',
-    };
-
-    setTasks((currentTasks) => [newTask, ...currentTasks]);
+  function resetForm() {
     setTaskName('');
     setSubject('');
     setDueDate('');
+    setPriority('Medium');
+    setEditingTaskId(null);
     setShowForm(false);
+  }
+
+  function saveTask(event) {
+    event.preventDefault();
+
+    if (!taskName.trim() || !subject.trim()) return;
+
+    if (editingTaskId !== null) {
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === editingTaskId
+            ? {
+                ...task,
+                task: taskName.trim(),
+                subject: subject.trim(),
+                date: dueDate || 'No due date',
+                priority,
+              }
+            : task
+        )
+      );
+    } else {
+      const newTask = {
+        id: Date.now(),
+        task: taskName.trim(),
+        subject: subject.trim(),
+        date: dueDate || 'No due date',
+        status: 'Pending',
+        priority,
+      };
+
+      setTasks((currentTasks) => [newTask, ...currentTasks]);
+    }
+
+    resetForm();
+  }
+
+  function editTask(task) {
+    setTaskName(task.task);
+    setSubject(task.subject);
+    setDueDate(
+      /^\d{4}-\d{2}-\d{2}$/.test(task.date) ? task.date : ''
+    );
+    setPriority(task.priority || 'Medium');
+    setEditingTaskId(task.id);
+    setShowForm(true);
   }
 
   function toggleTask(id) {
@@ -85,6 +124,10 @@ function App() {
     setTasks((currentTasks) =>
       currentTasks.filter((task) => task.id !== id)
     );
+
+    if (editingTaskId === id) {
+      resetForm();
+    }
   }
 
   const pendingCount = tasks.filter(
@@ -94,6 +137,12 @@ function App() {
   const completedCount = tasks.filter(
     (task) => task.status === 'Completed'
   ).length;
+
+  const filteredTasks = tasks.filter((task) => {
+    if (activeFilter === 'Pending') return task.status !== 'Completed';
+    if (activeFilter === 'Completed') return task.status === 'Completed';
+    return true;
+  });
 
   return (
     <div className="app">
@@ -187,9 +236,24 @@ function App() {
               </span>
             </div>
 
+            <div className="task-filters">
+              {['All', 'Pending', 'Completed'].map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  className={`filter-button ${
+                    activeFilter === filter ? 'active-filter' : ''
+                  }`}
+                  onClick={() => setActiveFilter(filter)}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
             {showForm && (
-              <form className="task-form" onSubmit={addTask}>
-                <h3>Add a new task</h3>
+              <form className="task-form" onSubmit={saveTask}>
+                <h3>{editingTaskId !== null ? 'Edit task' : 'Add a new task'}</h3>
 
                 <label htmlFor="taskName">Task title</label>
                 <input
@@ -211,7 +275,7 @@ function App() {
                   required
                 />
 
-                <label htmlFor="dueDate">Due date (optional)</label>
+                <label htmlFor="dueDate">Due date</label>
                 <input
                   id="dueDate"
                   type="date"
@@ -219,29 +283,40 @@ function App() {
                   onChange={(event) => setDueDate(event.target.value)}
                 />
 
+                <label htmlFor="priority">Priority</label>
+                <select
+                  id="priority"
+                  value={priority}
+                  onChange={(event) => setPriority(event.target.value)}
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+
                 <div className="form-actions">
                   <button
                     className="cancel-button"
                     type="button"
-                    onClick={() => setShowForm(false)}
+                    onClick={resetForm}
                   >
                     Cancel
                   </button>
 
                   <button className="primary-button" type="submit">
-                    Save task
+                    {editingTaskId !== null ? 'Save changes' : 'Save task'}
                   </button>
                 </div>
               </form>
             )}
 
             <div className="task-list">
-              {tasks.length === 0 ? (
+              {filteredTasks.length === 0 ? (
                 <p className="empty-state">
-                  No tasks yet. Add your first task to get started!
+                  No {activeFilter.toLowerCase()} tasks found.
                 </p>
               ) : (
-                tasks.map((task) => (
+                filteredTasks.map((task) => (
                   <div className="task-row" key={task.id}>
                     <input
                       className="task-checkbox"
@@ -260,6 +335,9 @@ function App() {
                         {task.task}
                       </strong>
                       <p>{task.subject} · {task.date}</p>
+                      <span className={`priority-badge ${(task.priority || 'Medium').toLowerCase()}`}>
+                        {task.priority || 'Medium'} Priority
+                      </span>
                     </div>
 
                     <span
@@ -273,6 +351,16 @@ function App() {
                     >
                       {task.status}
                     </span>
+
+                    <button
+                      className="edit-button"
+                      type="button"
+                      onClick={() => editTask(task)}
+                      aria-label={`Edit ${task.task}`}
+                      title="Edit task"
+                    >
+                      ✎
+                    </button>
 
                     <button
                       className="delete-button"
